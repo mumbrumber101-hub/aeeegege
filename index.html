@@ -16,7 +16,9 @@
   try {
     const response = await fetch(new URL('map-source.html?v=39c1f62f0d53f19bf843e9c7c531f2c82e970421', location.href));
     if (!response.ok) throw new Error('Map source could not be loaded');
-    const source = await response.text();
+    let source = await response.text();
+    const punctuationCorrections = [["adapt to Earth, and wonders", "adapt to Earth and wonders"], ["Charles fires as he drops and Marshall falls dead", "Charles fires as he drops, and Marshall falls dead"], ["when Crocker's hounds strike his trail a young engineer", "when Crocker's hounds strike his trail, a young engineer"], ["Amada Stutgard escapes from the building and Peter pursues her into the hills.", "Amada Stutgard escapes from the building, and Peter pursues her into the hills."]];
+    for (const [before, after] of punctuationCorrections) source = source.split(before).join(after);
     const end = source.toLowerCase().lastIndexOf('</body>');
     if (end < 0 || !source.includes('id="card"')) throw new Error('Map source is incomplete');
     const revised = source.slice(0, end) + '<script id="notes-panel-patch">' + patch + '<' + '/script>\n' + source.slice(end);
