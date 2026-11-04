@@ -15,16 +15,23 @@
   const retry = document.getElementById('retry');
   retry.onclick = () => location.reload();
   try {
-    const response = await fetch(new URL('map-source.html?v=39c1f62f0d53f19bf843e9c7c531f2c82e970421', location.href));
+    const [response, animationResponse] = await Promise.all([
+      fetch(new URL('map-source.html?v=39c1f62f0d53f19bf843e9c7c531f2c82e970421', location.href)),
+      fetch(new URL('animation-bundle.json?v=a3ea9b9e9ed2', location.href))
+    ]);
     if (!response.ok) throw new Error('Map source could not be loaded');
+    if (!animationResponse.ok) throw new Error('Animation could not be loaded');
+    const animation = await animationResponse.json();
     let source = await response.text();
     const punctuationCorrections = [["adapt to Earth, and wonders", "adapt to Earth and wonders"], ["Charles fires as he drops and Marshall falls dead", "Charles fires as he drops, and Marshall falls dead"], ["when Crocker's hounds strike his trail a young engineer", "when Crocker's hounds strike his trail, a young engineer"], ["Amada Stutgard escapes from the building and Peter pursues her into the hills.", "Amada Stutgard escapes from the building, and Peter pursues her into the hills."]];
     for (const [before, after] of punctuationCorrections) source = source.split(before).join(after);
     const wordingCorrections = [["The novel names no such channel; it is the ditch a strip mine of the period would have cut to drain its pit to the creek.", "The novel doesn't mention this channel, but it is the kind of ditch a strip mine of the period would have cut to drain its pit to the creek."], ["The novel does not say where the raft lies; the map starts it on Mud Bayou, the way Helen's story sends its runaway girl down the bayou to Crow Creek (30).", "The novel doesn't say where the raft is, so the map starts it on Mud Bayou, following the runaway girl's route down the bayou to Crow Creek in Helen's story (30)."], ["Mud Bayou runs into Crow Creek inside the pits, as Helen's story of the runaway girl has it (30).", "Mud Bayou runs into Crow Creek inside the pits, as it does in Helen's story of the runaway girl (30)."], ["at sites the novel does not give", "though the novel doesn't say where"], ["the novel does not place it, and the map sets it at the Green River bridge", "the novel doesn't say where it is, so the map puts it at the Green River bridge"], ["The places are set from the distances and relations the novel states; terrain, farms, county roads, and every name the novel does not give are filler.", "The places follow the distances and relative positions given in the novel. Terrain, farms, county roads, and names the novel doesn't give have been filled in."], ["The strip pits are laid out from their coal bed.", "The layout of the strip pits follows the coal bed."], ["each water stands at its spill point", "each body of water stands at its spill point"], ["The depiction was checked against two published quadrangles, listed below.", "This part of the map was checked against the two published quadrangles listed below."]];
     for (const [before, after] of wordingCorrections) source = source.split(before).join(after);
+    source = source.replace('</head>', '<style id="story-playback-style">' + animation.css + '</style>\n</head>');
+    source = source.replace('<aside class="panel" id="panel">', () => '<aside class="panel" id="panel">\n' + animation.html);
     const end = source.toLowerCase().lastIndexOf('</body>');
     if (end < 0 || !source.includes('id="card"')) throw new Error('Map source is incomplete');
-    const revised = source.slice(0, end) + '<script id="notes-panel-patch">' + patch + '<' + '/script>\n<script id="stream-junction-patch">' + streamPatch + '<' + '/script>\n' + source.slice(end);
+    const revised = source.slice(0, end) + '<script id="story-playback">' + animation.js + '<' + '/script>\n<script id="notes-panel-patch">' + patch + '<' + '/script>\n<script id="stream-junction-patch">' + streamPatch + '<' + '/script>\n' + source.slice(end);
     document.open();
     document.write(revised);
     document.close();
