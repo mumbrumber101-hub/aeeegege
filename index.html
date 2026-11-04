@@ -17,7 +17,7 @@
   try {
     const [response, animationResponse] = await Promise.all([
       fetch(new URL('map-source.html?v=39c1f62f0d53f19bf843e9c7c531f2c82e970421', location.href)),
-      fetch(new URL('animation-bundle.json?v=26909c0ac86e', location.href))
+      fetch(new URL('animation-bundle.json?v=86ec1f9794c7', location.href))
     ]);
     if (!response.ok) throw new Error('Map source could not be loaded');
     if (!animationResponse.ok) throw new Error('Animation could not be loaded');
